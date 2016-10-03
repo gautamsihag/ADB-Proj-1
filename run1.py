@@ -87,19 +87,43 @@ def setformattedResults(result, index):
 		f.write(" ]\n")
 
 
-# To handle stopwords and indexing docs
+def search(key, preceision, query):
+	# to record the number of iterations to ensure to get results in minimum number of iterations
+	iter_no = 0
 
-def docsIndex(results):
-	indexDocs = [] # for list of dictionaries
-	termFreq = dict()
-	invertedDoc = dict()
-	for r in results:
-		indexDoc = {}
-		indexDoc['relevant'] = r['relevant']
-		indexDoc[ID] = r[ID]
-		indexDoc['tfVector'] = {}
-		tokens = 
+	while True:
+		print 'Out Parameter Details'
+		print '%-20s= %s' % ("Client key", key)
+		print '%-20s= %s' % ("Query to be searched", " ".join(query))
+		print '%-20s= %s' % ("Target Precision", precision)
+		
+		with open(PRINT_PATH, 'a') as f:
+			f.write("Out Parameter Details")
+			f.write('%-20s= %s\n' % ("Client key", key))
+			f.write('%-20s= %s\n' % ("Query to be searched", " ".join(query)))
+			f.write('%-20s= %s\n' % ("Target Precision", precision))
 
+		results = bingSearch(key, query)
+
+		# to gracefully exit if the number of search is less than 10
+		if (len(results)<MAX_DISPLAY):
+			print "Error: The number of results are less than as required by the problem statement = %d, exiting.." % len(results)
+			with open(PRINT_PATH, 'a') as f:
+				f.write("Error: The number of results are less than as required by the problem statement = %d, exiting..\n" % len(results))
+			break
+
+		num_Items = 0
+		num_Relevant = 0
+		num_Non_Relevant = 0
+
+		print "Iterations: " + str(iter_no)
+		print "Search Results: "
+		print "Please follow as Y/y for relevant results, N/n for irrelevant results"
+
+		with open(PRINT_PATH, 'a') as f:
+			f.write("Iterations: " + str(iter_no) + "\n")
+			f.write("Search Results: \n")
+			f.write("Please follow as Y/y for relevant results, N/n for irrelevant results\n")
 
 
 
