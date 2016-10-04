@@ -124,6 +124,23 @@ def search(key, preceision, query):
 			f.write("Iterations: " + str(iter_no) + "\n")
 			f.write("Search Results: \n")
 			f.write("Please follow as Y/y for relevant results, N/n for irrelevant results\n")
+		
 
-
-
+		for r in results:
+			r[ID] = num_Items
+			num_Items += 1
+			setFormattedResults(r,num_Items)
+			relevant = raw_input("Is it relevant (Y/N) ?")
+			with open(PRINT_PATH, 'a') as f:
+				f.write("Relevant (yes/no) ? " + relevant + "\n")
+			if relevant == 'Y' or relevant == 'y' or relevant == 'yes' or relevant == 'Yes':
+				r['relevant'] = True
+				num_Relevant += 1
+			elif relevant = 'n' or relevant == 'N' or relevant == 'no' or relevant == 'No':
+				num_Non_Relevant += 1
+			else:
+				print "Invalid Input, exiting .. \n"
+				with open(PRINT_PATH, 'a') as f:
+					f.write("Invalid input, exiting..\n")
+				return
+		
