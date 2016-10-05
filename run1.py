@@ -125,7 +125,7 @@ def search(key, preceision, query):
 			f.write("Search Results: \n")
 			f.write("Please follow as Y/y for relevant results, N/n for irrelevant results\n")
 		
-
+		# for relevance feedback mechanism for results
 		for r in results:
 			r[ID] = num_Items
 			num_Items += 1
@@ -137,6 +137,7 @@ def search(key, preceision, query):
 				r['relevant'] = True
 				num_Relevant += 1
 			elif relevant = 'n' or relevant == 'N' or relevant == 'no' or relevant == 'No':
+				r['relevant'] = False
 				num_Non_Relevant += 1
 			else:
 				print "Invalid Input, exiting .. \n"
@@ -144,3 +145,20 @@ def search(key, preceision, query):
 					f.write("Invalid input, exiting..\n")
 				return
 		
+
+
+
+if __name__ == "__main__":
+	
+	if len(sys.argv) != 4:
+		print "python main.py <bingKey> <precision> <query>"
+		sys.exit(1)
+		
+	query = sys.argv[3]
+	acc_Key = sys.argv[1]
+	precision = sys.argv[2]
+	
+	if not precisionValidate(precision):
+		print "Invalid Precision. Precision between [0, 1]"
+		sys.exit(1)
+	
