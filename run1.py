@@ -144,8 +144,18 @@ def search(key, preceision, query):
 				with open(PRINT_PATH, 'a') as f:
 					f.write("Invalid input, exiting..\n")
 				return
-		
 
+#function to validate the precision value input by the user	
+# As described in the problem description, the precision@10 is a float value in [0,1]
+def precisionValidate(precision):
+	try:
+		prec = float(precision)
+		if (prec >= 1 or prec <= 0):
+			return False
+		else:
+			return True
+	except ValueError:
+		return False
 
 
 if __name__ == "__main__":
@@ -161,4 +171,7 @@ if __name__ == "__main__":
 	if not precisionValidate(precision):
 		print "Invalid Precision. Precision between [0, 1]"
 		sys.exit(1)
+	
+	queryA = query.split()
+	search(acc_Key, precision, queryA)
 	
