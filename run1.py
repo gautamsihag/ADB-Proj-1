@@ -30,7 +30,7 @@ URL = 'url'
 MAX_DISPLAY = 10
 ID = 'id'
 DESCRIPTION = "description"
-DELIMITERS = '[\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]+'
+SEP = '[\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]+'
 
 # Bing Namespace 
 namesp = {"atom":"http://www.w3.org/2005/Atom", "d":"http://schemas.microsoft.com/ado/2007/08/dataservices"}
@@ -87,6 +87,53 @@ def setformattedResults(result, index):
 		f.write(" ]\n")
 
 
+def get_idf_dictionary(results):
+  indexing_docs = []
+  term_freq = defaultdict()
+  doc_inverted = defaultdict()
+  docCount = defaultdict(int)
+  for document in results:
+    filtered_wordList = []
+    index_word = 0
+    wordList_doc = {}
+    wordList_doc['tvfV'] = {}
+    wordList_doc['relevant'] = document['relevant']
+    wordList_doc[ID] = document[ID]
+    #wordList = re.sub(r'[^\w\s]','',wordList)  # Using Regular expressions to take out punctuation
+    #wordList = set(wordList.split()) #Splitting on whitespace and taking the set of terms.
+    wordList = re.compile(SEP).split(document['description']) + re.compile(SEP).split(document['title'])
+    
+    for word in wordList:
+      if word in stopWords:
+        continue
+      if len(word) <= 1:
+        continue
+      word = word.lower()
+      filtered_wordList.append(word)
+      if word in wordList_doc['tvfV']:
+        wordList_doc['tvfV'][word] = wordList_doc['tvfV'][word] + 1
+      else:
+        wordList_doc['tvfV'][word] = 1
+      if word in term_freq:
+        term_freq[word] = term_freq[word] + 1
+      else:
+        term_freq[word] = 1
+      
+      
+      if not doc_inverted.has_key(word):
+        doc_inverted[word] = {}
+      if doc_inverted[word][document[ID]].has_key("b"):
+        doc_inverted[word][document[ID]]["b"].append(index_word)
+      else:
+        doc_inverted[word][document[ID]]["b"] = index_word
+      
+      index_word = index_word + 1
+    
+    indexing_docs.append(wordList_doc)
+  
+  return indexing_docs, doc_inverted
+
+
 def search(key, preceision, query):
 	# to record the number of iterations to ensure to get results in minimum number of iterations
 	iter_no = 0
@@ -140,10 +187,36 @@ def search(key, preceision, query):
 				r['relevant'] = False
 				num_Non_Relevant += 1
 			else:
-				print "Invalid Input, exiting .. \n"
 				with open(PRINT_PATH, 'a') as f:
 					f.write("Invalid input, exiting..\n")
+				print "Invalid Input, exiting .. \n"
 				return
+		with open(PRINT_PATH, 'a') as f:
+			f.write("Add Summary Feedback to the transcript\n")
+		if (num_Relevant <= 0):
+			with open(PRINT_PATH, 'a') as f:
+				f.write("Error: Exiting, Irrelevant results with feedback\n")
+			print "Error: Exiting, Irrelevant results with feedback\n"
+			return
+		with open(PRINT_PATH, 'a') as f:
+				f.write("Precision " + str(float(num_Relevant)/MAX_DISPLAY) + "\n")
+			print "Precision " + str(float(num_Relevant)/MAX_DISPLAY)"
+		
+		if float(num_Relevant)/MAX_DISPLAY < precision:
+			with open(PRINT_PATH, 'a') as f:
+				f.write("As per the current run the precision is " + str(precision) + "\n")
+			print "As per the current run the precision is " + str(precision)
+			new_terms, query_vectors = order_next_query(query, results, num_Relevant, num_Non_Relevant)
+			with open(PRINT_PATH, 'a') as f:
+				f.write("Strings added to the query to refine results" str(new_terms) + "\n")
+			print "Strings added to the query to refine results" str(new_terms)
+		else:
+			with open(PRINT_PATH, 'a') as f:
+				f.write("Desired Precision Acquired. Program Exiting\n")
+			print "Desired Precision Acquired. Program Exiting" 
+			return
+		
+		iter_no = iter_no + 1
 
 #function to validate the precision value input by the user	
 # As described in the problem description, the precision@10 is a float value in [0,1]
