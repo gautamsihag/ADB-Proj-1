@@ -64,7 +64,7 @@ def get_idf_dictionary(results):
     filtered_wordList = []
     index_word = 0
     wordList_doc = {}
-    wordList_doc['tvfV'] = {}
+    wordList_doc['tfV'] = {}
     wordList_doc['relevant'] = document['relevant']
     wordList_doc[ID] = document[ID]
     #wordList = re.sub(r'[^\w\s]','',wordList)  # Using Regular expressions to take out punctuation
@@ -78,10 +78,10 @@ def get_idf_dictionary(results):
         continue
       word = word.lower()
       filtered_wordList.append(word)
-      if word in wordList_doc['tvfV']:
-        wordList_doc['tvfV'][word] = wordList_doc['tvfV'][word] + 1
+      if word in wordList_doc['tfV']:
+        wordList_doc['tfV'][word] = wordList_doc['tfV'][word] + 1
       else:
-        wordList_doc['tvfV'][word] = 1
+        wordList_doc['tfV'][word] = 1
       if word in term_freq:
         term_freq[word] = term_freq[word] + 1
       else:
@@ -102,32 +102,58 @@ def get_idf_dictionary(results):
   return doc_inverted, indexing_docs
 
 
-#returns a tfidf vector given a result (in json)
-def get_tf_idf_vector(document):
-  wordList = document['Description'].lower()
-  wordList = re.sub(r'[^\w\s]','',wordList)
-  wordList = wordList.split()  
-  tfVector = defaultdict(float)
-  for word in wordList:
-    tfVector[word] += 1.0
-  tfidfVector = defaultdict(float)
-  for key, value in tfVector.iteritems():
-    tfidfVector[key] = (float(value) / float(len(wordList))) / float(docCount[key])    
-  return tfidfVector
- 
 
-#get vectors for a set of results, save each vector to its result (as an entry in the dictionary)
-def get_vectors(documents):
-  for document in documents:
-    document['tfidfVector'] = get_tf_idf_vector(document)
 
-# get a tfidf vector for the list of query words. Return as a new dictionary. We assume that the user does not input repeated words (and the program ensures that expanded queries will not include repeated words).
-def get_query_tfidf(queryList):
-  tfidfVector = defaultdict(float)
-  for word in query:
-    tfidfVector[word] = (1.0 / float(len(query))) / float(docCount[word])  
-  return tfidfVector
-
+def implemented_rocchio(OldQuery, indexing_docs, doc_inverted, num_Relevant, num_Non_Relevant):
+  weights_term = {}
+  for word in OldQuery:
+    weights_term[word] = 1.0
+  
+  weights = {}
+  for word in doc_inverted.iterkeys():
+    # weight vector initialization for each term in inverted file
+    weights[word] = 0.0
+    
+  tf_Weights_relevant = {}
+  tf_weights_nonrelevant = {}
+  # calculation of weights for relevant and nonrelevant vectors
+  for doc in indexing_docs:
+    if doc['relevant']:
+      for word in doc["tfv"]:
+        if word not in tf_Weights_relevant:
+          tf_Weights_relevant[word] = doc["tfv"][word]
+        else:
+          tf_Weights_relevant[word] = tf_Weights_relevant[word] + doc["tfv"][word]
+    else:
+      for word in doc["tfv"]:
+        if word in tf_weights_nonrelevant:
+          tf_weights_nonrelevant[word] = tf_weights_nonrelevant[word] + doc["tfv"][word]
+        else:
+          tf_weights_nonrelevant[word] = doc["tfv"][word]
+  
+  # Calculating vector values for Rocchio expansion
+  
+  for word in doc_inverted.iterkeys():
+    idf = math.log(float(len(indexing_docs)) / float(len(doc_inverted[word].keys())), MAX_DISPLAY)
+    
+    # for second & third terms of Roccio's Algorithm
+    for doc_id in doc_inverted[word].iterkeys():
+      if indexing_docs[doc_id]['relevant']:
+        weights[word] = weights[word] + B * idf * (float(tf_weights_relevant[word]) / num_Relevant)
+      else:
+        weights[word] = weights[word] - G * idf * (float(tf_weights_nonrelevant[word]) / num_Non_Relevant)
+    
+    if word in weights_term:
+      weights_term[word] = A * weights_term[word] + weights[word]
+    elif weights[word] > 0:
+      weights_term[word] = weights[word]
+    
+  return weights_term
+  
+  
+  
+  
+  
 # Given parameters Alpha, Beta and Gamma (coefficients to weight the original query and the centroids of the tfidf vectors of the relevant and nonrelevant results respectively) a the sets of relevant and nonrelevant documents, this function returns what the new vector would be in Rocchio's algorithm. RelevantFraction here is simply the precision reached in this round (i.e. the relevant fraction of results) 
 def get_new_query_vector(weights, query, maxV = 2):
   newQueryVector = defaultdict(float)

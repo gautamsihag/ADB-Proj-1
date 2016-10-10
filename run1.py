@@ -31,7 +31,9 @@ MAX_DISPLAY = 10
 ID = 'id'
 DESCRIPTION = "description"
 SEP = '[\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]+'
-
+A = 1.0
+B = 1.0
+G = 1.0
 # Bing Namespace 
 namesp = {"atom":"http://www.w3.org/2005/Atom", "d":"http://schemas.microsoft.com/ado/2007/08/dataservices"}
 
